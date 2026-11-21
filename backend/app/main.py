@@ -5,19 +5,12 @@ from app.api.v1 import auth, comercial, external, produccion, social, trazabilid
 
 app = FastAPI(title="Agroindustrial ODS2 API", version="1.0.0")
 
-# Orígenes permitidos para el frontend (sin barra final).
-# Se lista explícitamente el dominio desplegado en Render porque, cuando se usa
-# allow_credentials=True, algunos navegadores rechazan el comodín "*" en
-# Access-Control-Allow-Origin.
-ALLOWED_ORIGINS = [
-    "https://agroindustria-frontend.onrender.com",
-    "http://localhost:3000",
-    "http://localhost:5173",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=[
+        "https://agroindustria-frontend.onrender.com",
+        "http://localhost:4200",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
