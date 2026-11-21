@@ -1,5 +1,5 @@
 # Etapa 1: compilar la aplicación Angular
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 
 # Copiar primero los manifiestos para reutilizar la caché de Docker al cambiar solo código
