@@ -27,4 +27,5 @@
 ## Gotchas
 
 - `.vscode/launch.json` "ng test" still points to the old Karma URL (`localhost:9876`); Vitest runs in Node.
+- Angular 22.3 Signal Forms: no pongas atributos HTML `min`/`max` en un elemento con `[formField]` (NG8022). Usa los validadores `min`/`max` del schema en su lugar; `step` sí es permitido.
 - Do not copy the backend `SECRET_KEY` into frontend code; decoding the JWT client-side is presentation-only, not authorization.

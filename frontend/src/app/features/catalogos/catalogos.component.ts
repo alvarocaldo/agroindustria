@@ -143,7 +143,6 @@ const ETIQUETAS: Record<EntidadMaestro, string> = {
                     <input
                       id="hectareas"
                       type="number"
-                      min="0.01"
                       step="0.01"
                       class="{{ inputClass }}"
                       [formField]="loteForm.hectareas"
@@ -285,7 +284,6 @@ const ETIQUETAS: Record<EntidadMaestro, string> = {
                       <input
                         id="precio_unit"
                         type="number"
-                        min="0"
                         step="0.01"
                         class="{{ inputClass }}"
                         [formField]="productoForm.precio_unit"
