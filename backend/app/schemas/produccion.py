@@ -6,7 +6,8 @@ from pydantic import BaseModel, ConfigDict
 
 
 class SiembraCreate(BaseModel):
-    ID_Siembra: str
+    # Vacío/None => el trigger BEFORE INSERT genera el código de la siembra.
+    ID_Siembra: Optional[str] = None
     ID_Lote: str
     ID_Variedad: str
     ID_Campana: str

@@ -1,10 +1,12 @@
 from datetime import date
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
 
 class EntregaCreate(BaseModel):
-    ID_Entrega: str
+    # Vacío/None => el trigger BEFORE INSERT genera el código de la entrega.
+    ID_Entrega: Optional[str] = None
     ID_Programa: str
     ID_Beneficiario: str
     Raciones: int

@@ -2,7 +2,16 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.v1 import auth, comercial, external, produccion, social, trazabilidad
+from app.api.v1 import (
+    auth,
+    catalogos,
+    comercial,
+    external,
+    maestros,
+    produccion,
+    social,
+    trazabilidad,
+)
 
 app = FastAPI(title="Agroindustrial ODS2 API", version="1.0.0")
 
@@ -36,6 +45,8 @@ app.include_router(comercial.router, prefix="/api/v1/comercial", tags=["Comercia
 app.include_router(trazabilidad.router, prefix="/api/v1/trazabilidad", tags=["Trazabilidad"])
 app.include_router(social.router, prefix="/api/v1/social", tags=["Social"])
 app.include_router(external.router, prefix="/api/v1/external", tags=["RENIEC"])
+app.include_router(catalogos.router, prefix="/api/v1/catalogos", tags=["Catálogos"])
+app.include_router(maestros.router, prefix="/api/v1/maestros", tags=["Maestros"])
 
 
 @app.get("/")

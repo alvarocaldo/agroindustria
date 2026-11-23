@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 def registrar_pedido_completo(
     db: Session,
-    id_pedido: str,
+    id_pedido: str | None,
     id_cliente: str,
     id_usuario: int,
     detalles: list[dict],
