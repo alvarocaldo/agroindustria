@@ -59,6 +59,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/social/entrega-form/entrega-form.component').then((m) => m.EntregaFormComponent),
       },
+      {
+        path: 'catalogos',
+        title: 'Catálogos · Agroindustrial ODS 2',
+        loadComponent: () => import('./features/catalogos/catalogos.component').then((m) => m.CatalogosComponent),
+      },
     ],
   },
   { path: '**', redirectTo: 'inicio' },

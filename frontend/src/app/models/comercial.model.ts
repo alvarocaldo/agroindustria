@@ -3,7 +3,8 @@ export type PedidoDetalle = Record<string, unknown>;
 
 /** PedidoCreate (app/schemas/comercial.py). id_usuario se toma del JWT, no del body. */
 export interface PedidoCreate {
-  id_pedido: string;
+  /** Vacío/null => el RPC autogenera el código. */
+  id_pedido?: string | null;
   id_cliente: string;
   detalles: PedidoDetalle[];
 }

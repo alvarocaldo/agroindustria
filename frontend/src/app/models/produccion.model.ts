@@ -1,6 +1,7 @@
 /** SiembraCreate (app/schemas/produccion.py). Fecha serializada como YYYY-MM-DD. */
 export interface SiembraCreate {
-  ID_Siembra: string;
+  /** Vacío/null => el trigger del backend autogenera el código. */
+  ID_Siembra?: string | null;
   ID_Lote: string;
   ID_Variedad: string;
   ID_Campana: string;

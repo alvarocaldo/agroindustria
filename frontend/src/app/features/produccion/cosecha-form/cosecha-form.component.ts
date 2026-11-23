@@ -1,8 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormField, form, min, pattern, required } from '@angular/forms/signals';
 import { finalize } from 'rxjs';
 import { ToastService } from '../../../core/services/toast.service';
 import type { CosechaResponse, CosechaUpdate } from '../../../models/produccion.model';
+import { CatalogosService } from '../../../services/catalogos.service';
 import { ProduccionService } from '../../../services/produccion.service';
 
 interface CosechaFormModel {
@@ -36,12 +37,20 @@ interface CosechaFormModel {
         class="grid grid-cols-1 gap-5 rounded-3xl border border-slate-100 bg-white p-6 shadow-lg shadow-gray-200/50 sm:p-8 md:grid-cols-3"
       >
         <div>
-          <label for="id_siembra" class="mb-2 block text-sm font-bold text-slate-700">ID de siembra *</label>
-          <input id="id_siembra" class="{{ inputClass }}" [formField]="cosechaForm.id_siembra" />
+          <label for="id_siembra" class="mb-2 block text-sm font-bold text-slate-700">Siembra *</label>
+          <select id="id_siembra" class="{{ inputClass }}" [formField]="cosechaForm.id_siembra">
+            <option value="" disabled>Selecciona una siembra activa</option>
+            @for (opcion of siembras(); track opcion.id) {
+              <option [value]="opcion.id">{{ opcion.etiqueta }}</option>
+            }
+          </select>
           @if (cosechaForm.id_siembra().touched() && cosechaForm.id_siembra().invalid()) {
             <p class="mt-2 text-xs font-medium text-red-600" role="alert">
               @for (error of cosechaForm.id_siembra().errors(); track error.kind) { <span>{{ error.message }}</span> }
             </p>
+          }
+          @if (!catalogos.cargando() && siembras().length === 0) {
+            <p class="mt-2 text-xs text-amber-600">No hay siembras activas disponibles.</p>
           }
         </div>
 
@@ -126,9 +135,11 @@ interface CosechaFormModel {
 export class CosechaFormComponent {
   private readonly service = inject(ProduccionService);
   private readonly toast = inject(ToastService);
+  readonly catalogos = inject(CatalogosService);
 
   readonly loading = signal(false);
   readonly respuesta = signal<CosechaResponse | null>(null);
+  readonly siembras = computed(() => this.catalogos.opcionesDe('SIEMBRA', 'SIEMBRAS'));
   readonly inputClass =
     'min-h-[48px] w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-all duration-200 hover:border-emerald-300 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40';
 
@@ -156,6 +167,10 @@ export class CosechaFormComponent {
     required(path.kg_cosechados, { message: 'Los kilogramos son obligatorios' });
     min(path.kg_cosechados, 0, { message: 'Los kilogramos deben ser mayores o iguales a cero' });
   });
+
+  constructor() {
+    this.catalogos.cargarOpciones().subscribe();
+  }
 
   onSubmit(event: Event): void {
     event.preventDefault();

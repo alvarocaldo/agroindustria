@@ -49,6 +49,12 @@ const NAV_ITEMS: readonly NavItem[] = [
       'M12 21s-7-4.5-9-9C1 8 4 5 7 6c2 .6 3.5 2 5 4 1.5-2 3-3.4 5-4 3-1 6 2 4 6-2 4.5-9 9-9 9Z',
     roles: [ROLES.ADMIN, ROLES.RESP_SOCIAL],
   },
+  {
+    label: 'Catálogos',
+    path: '/catalogos',
+    iconPath: 'M4 6h16M4 12h16M4 18h16M4 6v12M20 6v12M9 6v6M15 12v6',
+    roles: null,
+  },
 ];
 
 @Component({

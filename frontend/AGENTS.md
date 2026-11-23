@@ -10,11 +10,11 @@
 
 ## Backend contract (sibling `../backend`)
 
-- Full API/domain notes live in `../backend/AGENTS.md`; its 8 routes (7 de dominio + `GET /`) son la superficie completa. `environment.apiUrl = http://localhost:8000/api/v1` (uvicorn default port + `/api/v1` prefix).
+- Full API/domain notes live in `../backend/AGENTS.md`; la superficie incluye las rutas de dominio, `GET /catalogos/opciones`, los `GET/POST /maestros/{...}` y `GET /`. `environment.apiUrl = http://localhost:8000/api/v1` (uvicorn default port + `/api/v1` prefix).
 - `POST /auth/login` is **form-encoded** (`OAuth2PasswordRequestForm`: `username`, `password`), not JSON. Response is `{ access_token, token_type }`. JWT claims: `ID_Usuario`, `rol`, `nombre_completo`, `exp`.
 - Roles are `ADMIN`, `GERENTE`, `JEFE_PRODUCCION`, `JEFE_COMERCIAL`, `RESP_SOCIAL`; every non-login route is role-gated. Errors are FastAPI's `{ detail }` (string, or 422 array of `{loc,msg,type}`).
-- Only 7 domain endpoints exist: POST `/produccion/siembras`, GET `/produccion/siembras` (nuevo listado con `response_model=list[SiembraResponse]`), PATCH `/produccion/siembras/{id_siembra}/cosecha`, POST `/comercial/pedidos`, GET `/trazabilidad/pedido/{id_pedido}`, POST `/social/entregas`, plus GET `/`. No hay otros listados, maestros CRUD, dashboard/reportes, mermas, export ni PUT/DELETE. Do not add routes for them without a backend change.
-- `PedidoCreate.detalles` is `list[dict[str, Any]]` with **no defined keys**, and traceability rows have no connected `response_model` — render them dynamically rather than assuming field names.
+- Dominio: POST `/produccion/siembras`, GET `/produccion/siembras`, PATCH `/produccion/siembras/{id_siembra}/cosecha`, POST `/comercial/pedidos`, GET `/trazabilidad/pedido/{id_pedido}`, POST `/social/entregas`, GET `/`. Catálogos: GET `/catalogos/opciones` (`{ tipo: [{id, etiqueta}] }`). Maestros: GET/POST `/maestros/{lotes|categorias|productos|clientes|programas|beneficiarios}` (POST con roles por módulo). No hay dashboard/reportes, mermas, export ni PUT/DELETE. Do not add routes for them without a backend change.
+- `ID_Siembra`, `id_pedido` e `ID_Entrega` son opcionales: vacío/null activa la autogeneración del backend. `PedidoCreate.detalles` es `list[PedidoDetalleCreate]` con `extra="allow"`; el constructor visual del frontend envía `id_producto`, `id_siembra` y `cantidad`. Las filas de trazabilidad siguen sin `response_model` conectado — renderízalas dinámicamente.
 
 ## Architecture
 

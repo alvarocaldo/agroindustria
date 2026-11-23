@@ -1,7 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormField, form, maxLength, min, pattern, required } from '@angular/forms/signals';
 import { finalize } from 'rxjs';
 import type { SiembraCreate, SiembraResponse } from '../../../models/produccion.model';
+import { CatalogosService } from '../../../services/catalogos.service';
 import { ProduccionService } from '../../../services/produccion.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { StatusBadgeComponent } from '../../../shared/ui/status-badge/status-badge.component';
@@ -42,8 +43,15 @@ interface SiembraFormModel {
         class="grid grid-cols-1 gap-5 rounded-3xl border border-slate-100 bg-white p-6 shadow-lg shadow-gray-200/50 sm:p-8 md:grid-cols-2"
       >
         <div>
-          <label for="ID_Siembra" class="mb-2 block text-sm font-bold text-slate-700">ID de siembra *</label>
-          <input id="ID_Siembra" class="{{ inputClass }}" [formField]="siembraForm.ID_Siembra" />
+          <label for="ID_Siembra" class="mb-2 block text-sm font-bold text-slate-700">
+            ID de siembra <span class="font-medium text-slate-400">(opcional)</span>
+          </label>
+          <input
+            id="ID_Siembra"
+            class="{{ inputClass }}"
+            placeholder="Dejar vacío para autogenerar (ej. S002)"
+            [formField]="siembraForm.ID_Siembra"
+          />
           @if (siembraForm.ID_Siembra().touched() && siembraForm.ID_Siembra().invalid()) {
             <p class="mt-2 text-xs font-medium text-red-600" role="alert">
               @for (error of siembraForm.ID_Siembra().errors(); track error.kind) { <span>{{ error.message }}</span> }
@@ -52,18 +60,31 @@ interface SiembraFormModel {
         </div>
 
         <div>
-          <label for="ID_Lote" class="mb-2 block text-sm font-bold text-slate-700">ID de lote *</label>
-          <input id="ID_Lote" class="{{ inputClass }}" [formField]="siembraForm.ID_Lote" />
+          <label for="ID_Lote" class="mb-2 block text-sm font-bold text-slate-700">Lote *</label>
+          <select id="ID_Lote" class="{{ inputClass }}" [formField]="siembraForm.ID_Lote">
+            <option value="" disabled>Selecciona un lote</option>
+            @for (opcion of lotes(); track opcion.id) {
+              <option [value]="opcion.id">{{ opcion.etiqueta }}</option>
+            }
+          </select>
           @if (siembraForm.ID_Lote().touched() && siembraForm.ID_Lote().invalid()) {
             <p class="mt-2 text-xs font-medium text-red-600" role="alert">
               @for (error of siembraForm.ID_Lote().errors(); track error.kind) { <span>{{ error.message }}</span> }
             </p>
           }
+          @if (!catalogos.cargando() && lotes().length === 0) {
+            <p class="mt-2 text-xs text-amber-600">No hay lotes disponibles en el catálogo.</p>
+          }
         </div>
 
         <div>
-          <label for="ID_Variedad" class="mb-2 block text-sm font-bold text-slate-700">ID de variedad *</label>
-          <input id="ID_Variedad" class="{{ inputClass }}" [formField]="siembraForm.ID_Variedad" />
+          <label for="ID_Variedad" class="mb-2 block text-sm font-bold text-slate-700">Variedad *</label>
+          <select id="ID_Variedad" class="{{ inputClass }}" [formField]="siembraForm.ID_Variedad">
+            <option value="" disabled>Selecciona una variedad</option>
+            @for (opcion of variedades(); track opcion.id) {
+              <option [value]="opcion.id">{{ opcion.etiqueta }}</option>
+            }
+          </select>
           @if (siembraForm.ID_Variedad().touched() && siembraForm.ID_Variedad().invalid()) {
             <p class="mt-2 text-xs font-medium text-red-600" role="alert">
               @for (error of siembraForm.ID_Variedad().errors(); track error.kind) { <span>{{ error.message }}</span> }
@@ -72,8 +93,13 @@ interface SiembraFormModel {
         </div>
 
         <div>
-          <label for="ID_Campana" class="mb-2 block text-sm font-bold text-slate-700">ID de campaña *</label>
-          <input id="ID_Campana" class="{{ inputClass }}" [formField]="siembraForm.ID_Campana" />
+          <label for="ID_Campana" class="mb-2 block text-sm font-bold text-slate-700">Campaña *</label>
+          <select id="ID_Campana" class="{{ inputClass }}" [formField]="siembraForm.ID_Campana">
+            <option value="" disabled>Selecciona una campaña</option>
+            @for (opcion of campanas(); track opcion.id) {
+              <option [value]="opcion.id">{{ opcion.etiqueta }}</option>
+            }
+          </select>
           @if (siembraForm.ID_Campana().touched() && siembraForm.ID_Campana().invalid()) {
             <p class="mt-2 text-xs font-medium text-red-600" role="alert">
               @for (error of siembraForm.ID_Campana().errors(); track error.kind) { <span>{{ error.message }}</span> }
@@ -190,9 +216,13 @@ interface SiembraFormModel {
 export class SiembraFormComponent {
   private readonly service = inject(ProduccionService);
   private readonly toast = inject(ToastService);
+  readonly catalogos = inject(CatalogosService);
 
   readonly loading = signal(false);
   readonly ultimaSiembra = signal<SiembraResponse | null>(null);
+  readonly lotes = computed(() => this.catalogos.opcionesDe('LOTE', 'LOTES'));
+  readonly variedades = computed(() => this.catalogos.opcionesDe('VARIEDAD', 'VARIEDADES'));
+  readonly campanas = computed(() => this.catalogos.opcionesDe('CAMPAÑA', 'CAMPAÑAS'));
   readonly inputClass =
     'min-h-[48px] w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-all duration-200 hover:border-emerald-300 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40';
 
@@ -208,7 +238,6 @@ export class SiembraFormComponent {
   });
 
   readonly siembraForm = form(this.model, (path) => {
-    required(path.ID_Siembra, { message: 'El ID de siembra es obligatorio' });
     maxLength(path.ID_Siembra, 100, { message: 'Máximo 100 caracteres' });
     required(path.ID_Lote, { message: 'El ID de lote es obligatorio' });
     required(path.ID_Variedad, { message: 'El ID de variedad es obligatorio' });
@@ -217,6 +246,10 @@ export class SiembraFormComponent {
     pattern(path.Fecha_Siembra, /^\d{4}-\d{2}-\d{2}$/, { message: 'Usa el formato AAAA-MM-DD' });
     min(path.Kg_Cosechados, 0, { message: 'Los kilogramos no pueden ser negativos' });
   });
+
+  constructor() {
+    this.catalogos.cargarOpciones().subscribe();
+  }
 
   onSubmit(event: Event): void {
     event.preventDefault();
@@ -227,7 +260,7 @@ export class SiembraFormComponent {
 
     const value = this.model();
     const payload: SiembraCreate = {
-      ID_Siembra: value.ID_Siembra.trim(),
+      ID_Siembra: value.ID_Siembra.trim() || null,
       ID_Lote: value.ID_Lote.trim(),
       ID_Variedad: value.ID_Variedad.trim(),
       ID_Campana: value.ID_Campana.trim(),

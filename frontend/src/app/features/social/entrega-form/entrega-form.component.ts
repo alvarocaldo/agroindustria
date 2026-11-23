@@ -1,9 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormField, form, maxLength, min, pattern, required } from '@angular/forms/signals';
 import { finalize } from 'rxjs';
 import { ExternalService } from '../../../core/services/external.service';
 import { ToastService } from '../../../core/services/toast.service';
 import type { EntregaCreate, EntregaResponse } from '../../../models/social.model';
+import { CatalogosService } from '../../../services/catalogos.service';
 import { SocialService } from '../../../services/social.service';
 
 interface EntregaFormModel {
@@ -101,8 +102,15 @@ interface EntregaFormModel {
         </div>
 
         <div>
-          <label for="ID_Entrega" class="mb-2 block text-sm font-bold text-slate-700">ID de entrega *</label>
-          <input id="ID_Entrega" class="{{ inputClass }}" [formField]="entregaForm.ID_Entrega" />
+          <label for="ID_Entrega" class="mb-2 block text-sm font-bold text-slate-700">
+            ID de entrega <span class="font-medium text-slate-400">(opcional)</span>
+          </label>
+          <input
+            id="ID_Entrega"
+            class="{{ inputClass }}"
+            placeholder="Autogenerado si se deja vacío"
+            [formField]="entregaForm.ID_Entrega"
+          />
           @if (entregaForm.ID_Entrega().touched() && entregaForm.ID_Entrega().invalid()) {
             <p class="mt-2 text-xs font-medium text-red-600" role="alert">
               @for (error of entregaForm.ID_Entrega().errors(); track error.kind) { <span>{{ error.message }}</span> }
@@ -111,8 +119,15 @@ interface EntregaFormModel {
         </div>
 
         <div>
-          <label for="ID_Programa" class="mb-2 block text-sm font-bold text-slate-700">ID del programa social *</label>
-          <input id="ID_Programa" class="{{ inputClass }}" [formField]="entregaForm.ID_Programa" />
+          <label for="ID_Programa" class="mb-2 block text-sm font-bold text-slate-700">
+            Programa social *
+          </label>
+          <select id="ID_Programa" class="{{ inputClass }}" [formField]="entregaForm.ID_Programa">
+            <option value="" disabled>Selecciona un programa social</option>
+            @for (opcion of programas(); track opcion.id) {
+              <option [value]="opcion.id">{{ opcion.etiqueta }}</option>
+            }
+          </select>
           @if (entregaForm.ID_Programa().touched() && entregaForm.ID_Programa().invalid()) {
             <p class="mt-2 text-xs font-medium text-red-600" role="alert">
               @for (error of entregaForm.ID_Programa().errors(); track error.kind) { <span>{{ error.message }}</span> }
@@ -122,9 +137,14 @@ interface EntregaFormModel {
 
         <div>
           <label for="ID_Beneficiario" class="mb-2 block text-sm font-bold text-slate-700">
-            ID del beneficiario *
+            Beneficiario *
           </label>
-          <input id="ID_Beneficiario" class="{{ inputClass }}" [formField]="entregaForm.ID_Beneficiario" />
+          <select id="ID_Beneficiario" class="{{ inputClass }}" [formField]="entregaForm.ID_Beneficiario">
+            <option value="" disabled>Selecciona un beneficiario</option>
+            @for (opcion of beneficiarios(); track opcion.id) {
+              <option [value]="opcion.id">{{ opcion.etiqueta }}</option>
+            }
+          </select>
           @if (entregaForm.ID_Beneficiario().touched() && entregaForm.ID_Beneficiario().invalid()) {
             <p class="mt-2 text-xs font-medium text-red-600" role="alert">
               @for (error of entregaForm.ID_Beneficiario().errors(); track error.kind) { <span>{{ error.message }}</span> }
@@ -210,10 +230,13 @@ export class EntregaFormComponent {
   private readonly service = inject(SocialService);
   private readonly externalService = inject(ExternalService);
   private readonly toast = inject(ToastService);
+  readonly catalogos = inject(CatalogosService);
 
   readonly loading = signal(false);
   readonly buscandoDni = signal(false);
   readonly ultimaEntrega = signal<EntregaResponse | null>(null);
+  readonly programas = computed(() => this.catalogos.opcionesDe('PROGRAMA', 'PROGRAMAS'));
+  readonly beneficiarios = computed(() => this.catalogos.opcionesDe('BENEFICIARIO', 'BENEFICIARIOS'));
   readonly inputClass =
     'min-h-[48px] w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-all duration-200 hover:border-emerald-300 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40';
 
@@ -230,14 +253,17 @@ export class EntregaFormComponent {
   readonly entregaForm = form(this.model, (path) => {
     pattern(path.DNI, /^\d{8}$/, { message: 'El DNI debe tener 8 dígitos' });
     maxLength(path.DNI, 8, { message: 'El DNI no puede superar los 8 dígitos' });
-    required(path.ID_Entrega, { message: 'El ID de entrega es obligatorio' });
-    required(path.ID_Programa, { message: 'El ID del programa es obligatorio' });
-    required(path.ID_Beneficiario, { message: 'El ID del beneficiario es obligatorio' });
+    required(path.ID_Programa, { message: 'El programa social es obligatorio' });
+    required(path.ID_Beneficiario, { message: 'El beneficiario es obligatorio' });
     required(path.Raciones, { message: 'Las raciones son obligatorias' });
     min(path.Raciones, 1, { message: 'Las raciones deben ser un entero mayor que cero' });
     required(path.Fecha_Entrega, { message: 'La fecha de entrega es obligatoria' });
     pattern(path.Fecha_Entrega, /^\d{4}-\d{2}-\d{2}$/, { message: 'Usa el formato AAAA-MM-DD' });
   });
+
+  constructor() {
+    this.catalogos.cargarOpciones().subscribe();
+  }
 
   buscarDni(): void {
     const dni = this.model().DNI.trim();
@@ -275,7 +301,7 @@ export class EntregaFormComponent {
 
     const value = this.model();
     const payload: EntregaCreate = {
-      ID_Entrega: value.ID_Entrega.trim(),
+      ID_Entrega: value.ID_Entrega.trim() || null,
       ID_Programa: value.ID_Programa.trim(),
       ID_Beneficiario: value.ID_Beneficiario.trim(),
       Raciones: value.Raciones ?? 0,

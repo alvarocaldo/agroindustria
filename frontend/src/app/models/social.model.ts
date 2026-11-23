@@ -1,6 +1,7 @@
 /** EntregaCreate (app/schemas/social.py). */
 export interface EntregaCreate {
-  ID_Entrega: string;
+  /** Vacío/null => el trigger del backend autogenera el código. */
+  ID_Entrega?: string | null;
   ID_Programa: string;
   ID_Beneficiario: string;
   Raciones: number;
