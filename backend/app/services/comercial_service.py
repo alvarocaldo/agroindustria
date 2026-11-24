@@ -6,11 +6,25 @@ from app.repositories import comercial_repository
 from app.schemas.comercial import PedidoCreate
 
 
+def _db_error_detail(exc: SQLAlchemyError) -> str:
+    """Muestra el mensaje real de PostgreSQL, igual que en los otros servicios."""
+    orig = getattr(exc, "orig", None)
+    return str(orig).strip() if orig is not None else str(exc)
+
+
 def registrar_pedido(db: Session, pedido_in: PedidoCreate, id_usuario: int):
     if not pedido_in.detalles:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="El pedido debe incluir al menos un detalle",
+        )
+
+    try:
+        id_usuario_int = int(id_usuario)
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No se pudo validar el usuario del token",
         )
 
     id_pedido = pedido_in.id_pedido.strip() if pedido_in.id_pedido else ""
@@ -19,30 +33,33 @@ def registrar_pedido(db: Session, pedido_in: PedidoCreate, id_usuario: int):
     detalles = []
     for detalle in pedido_in.detalles:
         item = detalle.model_dump()
-        id_detalle = item.get("id_detalle")
-        if isinstance(id_detalle, str):
-            item["id_detalle"] = id_detalle.strip() or None
+        id_detalle = item.pop("id_detalle", None)
+        if isinstance(id_detalle, str) and id_detalle.strip():
+            item["id_detalle"] = id_detalle.strip()
         detalles.append(item)
 
     try:
-        result = comercial_repository.registrar_pedido_completo(
+        resultado = comercial_repository.registrar_pedido_completo(
             db=db,
             id_pedido=id_pedido,
             id_cliente=pedido_in.id_cliente,
-            id_usuario=id_usuario,
+            id_usuario=id_usuario_int,
             detalles=detalles,
         )
-    except SQLAlchemyError:
+    except SQLAlchemyError as exc:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Error al registrar el pedido",
+            detail=f"Error al registrar el pedido: {_db_error_detail(exc)}",
         )
 
-    if result is None:
+    if resultado is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No se pudo registrar el pedido",
         )
 
-    return {"mensaje": "Pedido registrado correctamente", "resultado": dict(result)}
+    return {
+        "mensaje": resultado.get("mensaje") or "Pedido registrado correctamente",
+        "resultado": resultado,
+    }

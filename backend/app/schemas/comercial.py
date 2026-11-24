@@ -6,8 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field
 class PedidoDetalleCreate(BaseModel):
     """Detalle de pedido; admite claves adicionales que espera la RPC.
 
-    `id_detalle` es opcional: cuando no se envía (o viene vacío) se pasa como
-    None a la RPC para que el trigger correspondiente genere el código.
+    `id_detalle` es opcional: cuando no se envía (o viene vacío) se omite del
+    JSONB para que `registrar_pedido_completo` genere el código (`DET001`...).
     """
 
     model_config = ConfigDict(extra="allow")
